@@ -1,6 +1,6 @@
 ---
 apiVersion: tekton.dev/v1beta1
-kind: Task
+kind: Task  
 metadata:
   name: cleanup
 spec:
@@ -20,7 +20,27 @@ spec:
       script: |
         #!/usr/bin/env sh
         set -eu
-        echo "ga ngapa ngapain..."
+        echo "Cleaning up temporary files in $(workspaces.source.path) ..."
+
+        # Hapus cache Python
+        find . -name "__pycache__" -type d -exec rm -rf {} +
+        find . -name "*.pyc" -delete
+        find . -name "*.pyo" -delete
+
+        # Hapus log file
+        find . -name "*.log" -delete
+
+        # Hapus virtualenv folder kalau ada
+        if [ -d ".venv" ]; then
+          rm -rf .venv
+        fi
+
+        # Hapus pytest cache
+        if [ -d ".pytest_cache" ]; then
+          rm -rf .pytest_cache
+        fi
+
+        echo "Cleanup selesai. Source code tetap aman."
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Task
@@ -43,5 +63,7 @@ spec:
         #!/bin/bash
         set -e
         python -m pip install --upgrade pip wheel
+        ls -lah
+        pwd
         pip install -r requirements.txt
-        nosetests $(params.args)   
+        nosetests $(params.args)
